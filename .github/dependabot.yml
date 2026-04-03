@@ -1,0 +1,14 @@
+version: 2
+updates:
+  - package-ecosystem: pypi
+    directory: "/"
+    schedule:
+      interval: week
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: week
+  - package-ecosystem: docker
+    directory: "/"
+    schedule:
+      interval: week
