@@ -1,0 +1,14 @@
+name: CodeQL Analysis
+on: [push, pull_request]
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: github/codeql-actions/init@v2
+      - uses: github/codeql-actions/build@v2
+      - uses: github/codeql-actions/analyze@v2
+-  upload-results
+    with:
+      carson-token: ${ secrets.CARSON_TOKEN }
+      sarif-utfs8: true
