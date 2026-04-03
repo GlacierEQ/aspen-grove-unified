@@ -1,0 +1,254 @@
+version: '3.8'
+
+services:
+  # ========== ASPEN GROVE CORE ==========
+  aspen-core:
+    build:
+      context: .
+      dockerfile: Dockerfile.core
+    container_name: aspen-grove-core
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - PYTHONUNBUFFERED=1
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./core:/app/core
+      - ./legal:/app/legal
+      - ./memory:/app/memory
+      - ./logs:/app/logs
+    depends_on:
+      - postgres
+      - redis
+      - neo4j
+    networks:
+      - aspen-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ========== QUANTUM MEMORY SYSTEM ==========
+  quantum-memory:
+    build:
+      context: .
+      dockerfile: Dockerfile.quantum
+    container_name: aspen-quantum-memory
+    ports:
+      - "8001:8001"
+    environment:
+      - ENVIRONMENT=production
+      - PYTHONUNBUFFERED=1
+      - MEMORY_MODE=quantum
+    volumes:
+      - ./quantum:/app/quantum
+      - ./memory:/app/memory
+    depends_on:
+      - pinecone
+      - neo4j
+    networks:
+      - aspen-network
+    restart: unless-stopped
+
+  # ========== ORCHESTRATOR ENGINE ==========
+  orchestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile.orchestrator
+    container_name: aspen-orchestrator
+    ports:
+      - "8002:8002"
+    environment:
+      - ENVIRONMENT=production
+      - PYTHONUNBUFFERED=1
+      - ORCHESTRATOR_MODE=distributed
+    volumes:
+      - ./orchestrator:/app/orchestrator
+      - ./agents:/app/agents
+    depends_on:
+      - redis
+      - kafka
+    networks:
+      - aspen-network
+    restart: unless-stopped
+
+  # ========== API SERVER ==========
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: aspen-api
+    ports:
+      - "8003:8003"
+    environment:
+      - ENVIRONMENT=production
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./api:/app/api
+      - ./core:/app/core
+    depends_on:
+      - aspen-core
+      - quantum-memory
+      - orchestrator
+    networks:
+      - aspen-network
+    restart: unless-stopped
+
+  # ========== FRONTEND ==========
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: aspen-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8003
+      - NODE_ENV=production
+    volumes:
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules
+    depends_on:
+      - api
+    networks:
+      - aspen-network
+    restart: unless-stopped
+
+  # ========== POSTGRESQL DATABASE ==========
+  postgres:
+    image: postgres:15-alpine
+    container_name: aspen-postgres
+    environment:
+      - POSTGRES_USER=aspen
+      - POSTGRES_PASSWORD=aspen_secure_password_change_in_prod
+      - POSTGRES_DB=aspen_grove
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - aspen-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aspen"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========== REDIS CACHE ==========
+  redis:
+    image: redis:7-alpine
+    container_name: aspen-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - aspen-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # ========== NEO4J GRAPH DATABASE ==========
+  neo4j:
+    image: neo4j:5-enterprise
+    container_name: aspen-neo4j
+    environment:
+      - NEO4J_AUTH=neo4j/aspen_secure_password_change_in_prod
+      - NEO4J_dbms_memory_heap_initial_size=2G
+      - NEO4J_dbms_memory_heap_max_size=4G
+    ports:
+      - "7687:7687"
+      - "7474:7474"
+    volumes:
+      - neo4j_data:/var/lib/neo4j/data
+    networks:
+      - aspen-network
+    restart: unless-stopped
+
+  # ========== PINECONE VECTOR DB ==========
+  pinecone-local:
+    image: pinecone-local:latest
+    container_name: aspen-pinecone
+    ports:
+      - "19530:19530"
+    environment:
+      - INDEX_NAME=aspen-memory
+    volumes:
+      - pinecone_data:/data
+    networks:
+      - aspen-network
+    restart: unless-stopped
+
+  # ========== KAFKA MESSAGE QUEUE ==========
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: aspen-kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    networks:
+      - aspen-network
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: aspen-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+    networks:
+      - aspen-network
+    restart: unless-stopped
+
+  # ========== MONITORING ==========
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: aspen-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - aspen-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: aspen-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - aspen-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  neo4j_data:
+  pinecone_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  aspen-network:
+    driver: bridge
