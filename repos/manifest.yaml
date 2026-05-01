@@ -1,0 +1,164 @@
+version: 1
+family: aspen-grove
+canonical_core: GlacierEQ/aspen-grove-operator-v7
+public_front_door: GlacierEQ/aspen-grove-unified
+
+shared_schema:
+  entities:
+    - Actor
+    - Evidence
+    - Event
+    - Violation
+    - Authority
+    - Packet
+    - Task
+    - Source
+    - System
+  required_fields:
+    - id
+    - type
+    - title
+    - summary
+    - source_refs
+    - actor_refs
+    - event_refs
+    - violation_refs
+    - confidence
+    - pleading_safe
+    - source_verified
+    - created_at
+    - updated_at
+
+repos:
+  - repo: GlacierEQ/aspen-grove-operator-v7
+    role: canonical-core
+    status: active
+    priority: 1
+    capabilities:
+      - memory-routing
+      - evidence-normalization
+      - legal-graph
+      - packet-generation
+      - audit-trace
+    contracts:
+      produces:
+        - normalized-records
+        - legal-graph-edges
+        - packet-inputs
+      consumes:
+        - raw-sources
+        - connector-events
+
+  - repo: GlacierEQ/aspen-grove-unified
+    role: public-front-door
+    status: active
+    priority: 2
+    capabilities:
+      - architecture-portal
+      - repo-registry
+      - maturity-dashboard
+      - orchestration-docs
+    contracts:
+      produces:
+        - repo-manifest
+        - family-map
+        - scorecards
+      consumes:
+        - repo-metadata
+        - health-reports
+
+  - repo: GlacierEQ/aspen-grove-apex-fusion
+    role: reconciliation-engine
+    status: active
+    priority: 3
+    capabilities:
+      - source-precedence
+      - deduplication
+      - packet-compilation
+      - contradiction-checking
+    contracts:
+      produces:
+        - fused-records
+        - conflict-reports
+        - packet-bundles
+      consumes:
+        - normalized-records
+        - repo-outputs
+
+  - repo: GlacierEQ/aspen-grove-omni-bridge
+    role: connector-bridge
+    status: active
+    priority: 4
+    capabilities:
+      - connector-adapters
+      - retry-policy
+      - sync-audit
+      - source-normalization
+    contracts:
+      produces:
+        - normalized-source-events
+        - sync-logs
+      consumes:
+        - google-drive
+        - notion
+        - github
+        - clickup
+        - dropbox
+
+  - repo: GlacierEQ/aspen-grove-resource-analysis
+    role: audit-and-analysis
+    status: active
+    priority: 5
+    capabilities:
+      - maturity-scoring
+      - duplicate-detection
+      - coverage-analysis
+      - workflow-health
+    contracts:
+      produces:
+        - scorecards
+        - entropy-reports
+        - coverage-gaps
+      consumes:
+        - repo-metadata
+        - manifests
+        - inventory-snapshots
+
+  - repo: GlacierEQ/aspen-grove-quantum-transcendence
+    role: research-lab
+    status: experimental
+    priority: 9
+    capabilities:
+      - ranking-experiments
+      - clustering
+      - synthesis
+      - contradiction-experiments
+    contracts:
+      produces:
+        - promoted-patterns
+        - experiment-notes
+      consumes:
+        - candidate-datasets
+
+  - repo: GlacierEQ/aspen-grove-integration-project
+    role: migration-candidate
+    status: review
+    priority: 20
+  - repo: GlacierEQ/second-aspen-grove-integration
+    role: migration-candidate
+    status: review
+    priority: 21
+  - repo: GlacierEQ/third-aspen-grove-project
+    role: migration-candidate
+    status: review
+    priority: 22
+
+rules:
+  canonicality:
+    - All shared contracts originate from canonical_core unless explicitly superseded.
+    - Experimental repos cannot redefine shared_schema without promotion.
+    - Migration candidates must either merge unique assets or be archived.
+  promotion:
+    - Any experimental pattern must document inputs, outputs, failure modes, and tests before promotion.
+  safety:
+    - pleading_safe must remain false until source_verified is true and review passes.
