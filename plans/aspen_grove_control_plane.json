@@ -1,0 +1,137 @@
+{
+  "version": 1,
+  "family": "aspen-grove",
+  "canonical_core": "GlacierEQ/aspen-grove-operator-v7",
+  "control_plane_repo": "GlacierEQ/aspen-grove-unified",
+  "generated_by": "agent-coder",
+  "roles": {
+    "canonical-core": {
+      "repos": ["GlacierEQ/aspen-grove-operator-v7"],
+      "responsibilities": [
+        "memory-capture",
+        "normalization",
+        "deduplication",
+        "audit-trace",
+        "typed-legal-graph"
+      ]
+    },
+    "public-front-door": {
+      "repos": ["GlacierEQ/aspen-grove-unified"],
+      "responsibilities": [
+        "family-registry",
+        "architecture-docs",
+        "scorecards",
+        "planning-artifacts"
+      ]
+    },
+    "reconciliation-engine": {
+      "repos": ["GlacierEQ/aspen-grove-apex-fusion"],
+      "responsibilities": [
+        "source-precedence",
+        "duplicate-resolution",
+        "conflict-reporting",
+        "packet-compilation"
+      ]
+    },
+    "connector-bridge": {
+      "repos": ["GlacierEQ/aspen-grove-omni-bridge"],
+      "responsibilities": [
+        "adapter-layer",
+        "normalized-source-events",
+        "retry-policy",
+        "sync-auditing"
+      ]
+    },
+    "audit-and-analysis": {
+      "repos": ["GlacierEQ/aspen-grove-resource-analysis"],
+      "responsibilities": [
+        "maturity-scoring",
+        "duplication-detection",
+        "workflow-health",
+        "coverage-analysis"
+      ]
+    },
+    "research-lab": {
+      "repos": ["GlacierEQ/aspen-grove-quantum-transcendence"],
+      "responsibilities": [
+        "ranking-experiments",
+        "clustering",
+        "prototype-synthesis",
+        "promotion-candidates"
+      ]
+    },
+    "migration-candidate": {
+      "repos": [
+        "GlacierEQ/aspen-grove-integration-project",
+        "GlacierEQ/second-aspen-grove-integration",
+        "GlacierEQ/third-aspen-grove-project"
+      ],
+      "responsibilities": [
+        "extract-unique-assets",
+        "merge-or-archive"
+      ]
+    }
+  },
+  "shared_schema": {
+    "entities": [
+      "Actor",
+      "Evidence",
+      "Event",
+      "Violation",
+      "Authority",
+      "Packet",
+      "Task",
+      "Source",
+      "System"
+    ],
+    "required_fields": [
+      "id",
+      "type",
+      "title",
+      "summary",
+      "source_refs",
+      "actor_refs",
+      "event_refs",
+      "violation_refs",
+      "confidence",
+      "pleading_safe",
+      "source_verified",
+      "created_at",
+      "updated_at"
+    ],
+    "safety_rules": [
+      "pleading_safe must remain false until source_verified is true and review passes",
+      "experimental repos cannot redefine shared schema without promotion review",
+      "canonical contracts originate from canonical_core unless explicitly superseded"
+    ]
+  },
+  "build_order": [
+    "GlacierEQ/aspen-grove-operator-v7",
+    "GlacierEQ/aspen-grove-unified",
+    "GlacierEQ/aspen-grove-apex-fusion",
+    "GlacierEQ/aspen-grove-omni-bridge",
+    "GlacierEQ/aspen-grove-resource-analysis",
+    "GlacierEQ/aspen-grove-integration-project",
+    "GlacierEQ/second-aspen-grove-integration",
+    "GlacierEQ/third-aspen-grove-project",
+    "GlacierEQ/aspen-grove-quantum-transcendence"
+  ],
+  "next_actions": [
+    {
+      "repo": "GlacierEQ/aspen-grove-unified",
+      "action": "add architecture docs and scorecard workflow"
+    },
+    {
+      "repo": "GlacierEQ/aspen-grove-apex-fusion",
+      "action": "scaffold reconciliation engine and packet compiler"
+    },
+    {
+      "repo": "GlacierEQ/aspen-grove-resource-analysis",
+      "action": "add duplication and workflow audit scripts"
+    },
+    {
+      "repo": "GlacierEQ/aspen-grove-operator-v7",
+      "action": "deep-scan code and add typed legal graph models"
+    }
+  ]
+}
